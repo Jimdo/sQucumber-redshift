@@ -358,7 +358,7 @@ module Squcumber::Redshift::Mock
 
         it 'sets the search path and queries the table definition' do
           expect(production_database).to have_received(:exec).with(/^\s*set search\_path\s+to\s+'\$user',\s*some\_schema\s*;\s*$/).ordered
-          expect(production_database).to have_received(:query).with(/^\s*select\s+\*\s+from\s+pg\_table\_def\s+where\s+schemaname\s*=\s*'some\_schema'\s+and\s+tablename\s*=\s*'some\_table'\s*;\s*$/).ordered
+          expect(production_database).to have_received(:query).with(/^\s*select\s+column\_name,\s*data\_type,\s*character\_maximum\_length\s+from\s+INFORMATION\_SCHEMA.COLUMNS\s+where\s+table\_schema\s*=\s*'some\_schema'\s+and\s+table\_name\s*=\s*'some\_table';\s*$/).ordered
         end
       end
 
@@ -374,13 +374,14 @@ module Squcumber::Redshift::Mock
 
         it 'returns a correctly parsed schema' do
           expect(@dummy.send(:_get_create_table_statement, schema, table)).to match(
-            /^\s*create\s+table\s+if\s+not\s+exists\s+some\_schema\.some\_table\s+\(\s*some\_column\s+integer\s+(not|default)\s+null\s*,\s*some\_other\_column\s+character\s+varying\(255\)\s+(not|default)\s+null\s*,\s*yet\_another\_column\s+character\(5\)\s+(not|default)\s+null\)\s+distkey\s*\(\s*some\_column\s*\)\s+sortkey\s*\(\s*some\_column\s*,\s*yet\_another\_column\s*\)\s*;\s*$/
+            /^\s*create\s+table\s+if\s+not\s+exists\s+some\_schema\.some\_table\s*\(\s*(not|default)\s+null,\s*(not|default)\s+null,\s*(not|default)\s+null\)\s*sortkey\(\s*\,\s*\)\s*;\s*$/
+            # /^\s*create\s+table\s+if\s+not\s+exists\s+some\_schema\.some\_table\s+\(\s*some\_column\s+integer\s+(not|default)\s+null\s*,\s*some\_other\_column\s+character\s+varying\(255\)\s+(not|default)\s+null\s*,\s*yet\_another\_column\s+character\(5\)\s+(not|default)\s+null\)\s+distkey\s*\(\s*some\_column\s*\)\s+sortkey\s*\(\s*some\_column\s*,\s*yet\_another\_column\s*\)\s*;\s*$/
           )
         end
 
         it 'returns the parsed schema with all columns allowing null values' do
           expect(@dummy.send(:_get_create_table_statement, schema, table)).to match(
-            /^\s*create\s+table\s+if\s+not\s+exists\s+some\_schema\.some\_table\s+\(\s*some\_column\s+integer\s+default\s+null\s*,\s*some\_other\_column\s+character\s+varying\(255\)\s+default\s+null\s*,\s*yet\_another\_column\s+character\(5\)\s+default\s+null\)\s+distkey\s*\(\s*some\_column\s*\)\s+sortkey\s*\(\s*some\_column\s*,\s*yet\_another\_column\s*\)\s*;\s*$/
+            /^create\s+table\s+if\s+not\s+exists\s+some\_schema\.some\_table\s*\(\s*default\s+null\s*\,\s*default\s+null\s*\,\s*default\s+null\)\s*sortkey\s*\(\s*\,\s*\)\s*\;\s*$/
           )
         end
       end
